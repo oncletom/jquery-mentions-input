@@ -337,6 +337,7 @@
         elmListItem = elmListItem.appendTo(elmDropDownList);
       });
 
+      elmInputBox.trigger($.Event('mentions.show'));
       elmAutocompleteList.show();
       elmDropDownList.show();
     }
