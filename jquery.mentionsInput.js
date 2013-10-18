@@ -156,7 +156,7 @@
       var inputText = getInputBoxValue();
 
       mentionsCollection = _.reject(mentionsCollection, function (mention, index) {
-        return !mention.value || inputText.indexOf(mention.value) == -1;
+        return !mention.value || ~inputText.indexOf(mention.value);
       });
       mentionsCollection = _.compact(mentionsCollection);
     }
@@ -219,7 +219,7 @@
       updateMentionsCollection();
 
       var triggerCharIndex = _.lastIndexOf(inputBuffer, settings.triggerChar);
-      if (triggerCharIndex > -1) {
+      if (~triggerCharIndex) {
         currentDataQuery = inputBuffer.slice(triggerCharIndex + 1).join('');
         currentDataQuery = utils.rtrim(currentDataQuery);
 
