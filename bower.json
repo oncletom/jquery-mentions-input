@@ -1,0 +1,21 @@
+{
+  "name": "jquery-mentions-input",
+  "version": "1.4.0",
+  "homepage": "http://podio.github.io/jquery-mentions-input",
+  "authors": [
+    "Kenneth Auchenberg"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.0.3",
+    "jquery.elastic": "http://jquery-elastic.googlecode.com/files/jquery.elastic-1.6.11.zip"
+  }
+}
