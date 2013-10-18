@@ -143,7 +143,7 @@
       });
 
       mentionText = mentionText.replace(/\n/g, '<br />');
-      mentionText = mentionText.replace(/ {2}/g, '&nbsp; ');
+      mentionText = mentionText.replace(/ {2}/g, ' ');
       elmInputBox.data('messageText', syntaxMessage);
       elmMentionsOverlay.find('div').html(mentionText);
     }
@@ -190,6 +190,7 @@
       // Set correct focus and selection
       elmInputBox.focus();
       utils.setCaratPosition(elmInputBox[0], elmIsInput ? startEndIndex : elmInputBox.find('[data--id="'+mention.__id+'"]'));
+      elmInputBox.trigger($.Event('mentions.change'));
     }
 
     function getInputBoxValue() {
