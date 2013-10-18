@@ -28,6 +28,7 @@
       autocompleteListItemAvatar : _.template('<img src="<%= avatar %>" />'),
       autocompleteListItemIcon   : _.template('<div class="icon <%= icon %>"></div>'),
       mentionsOverlay            : _.template('<div class="mentions"><div></div></div>'),
+      mentionInline              : _.template('<%= value %> '),
       mentionItemSyntax          : _.template('@[<%= value %>](<%= type %>:<%= id %>)'),
       mentionItemHighlight       : _.template('<strong><span><%= value %></span></strong>')
     }
@@ -48,13 +49,26 @@
         var range = domNode.createTextRange();
         range.move('character', caretPos);
         range.select();
-      } else {
-        if (domNode.selectionStart) {
-          domNode.focus();
-          domNode.setSelectionRange(caretPos, caretPos);
-        } else {
-          domNode.focus();
-        }
+      }
+      else if ('getSelection' in document) {
+        var sel = window.getSelection();
+        var range = sel.getRangeAt(0);
+
+        range.collapse(false);
+        [].slice.call(domNode.children).forEach(function(el){
+          range.insertNode(el);
+        });
+        range.collapse(false);
+        sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      else if (domNode.selectionStart) {
+        domNode.focus();
+        domNode.setSelectionRange(caretPos, caretPos);
+      }
+      else {
+        domNode.focus();
       }
     },
     rtrim: function(string) {
@@ -65,6 +79,7 @@
   var MentionsInput = function (settings) {
 
     var domInput, elmInputBox, elmInputWrapper, elmAutocompleteList, elmWrapperBox, elmMentionsOverlay, elmActiveAutoCompleteItem;
+    var currentCaretRange, elmIsInput;
     var mentionsCollection = [];
     var autocompleteItemCollection = {};
     var inputBuffer = [];
@@ -74,6 +89,7 @@
 
     function initTextarea() {
       elmInputBox = $(domInput);
+      elmIsInput = !elmInputBox.attr('contenteditable');
 
       if (elmInputBox.attr('data-mentions-input') == 'true') {
         return;
@@ -123,13 +139,11 @@
         var formattedMention = _.extend({}, mention, {value: utils.htmlEncode(mention.value)});
         var textSyntax = settings.templates.mentionItemSyntax(formattedMention);
         var textHighlight = settings.templates.mentionItemHighlight(formattedMention);
-
         mentionText = mentionText.replace(textSyntax, textHighlight);
       });
 
       mentionText = mentionText.replace(/\n/g, '<br />');
       mentionText = mentionText.replace(/ {2}/g, '&nbsp; ');
-
       elmInputBox.data('messageText', syntaxMessage);
       elmMentionsOverlay.find('div').html(mentionText);
     }
@@ -148,19 +162,18 @@
     }
 
     function addMention(mention) {
-
       var currentMessage = getInputBoxValue();
+      mention.__id = mention.__id || Date.now()*Math.random();
 
       // Using a regex to figure out positions
       var regex = new RegExp("\\" + settings.triggerChar + currentDataQuery, "gi");
       regex.exec(currentMessage);
-
       var startCaretPosition = regex.lastIndex - currentDataQuery.length - 1;
       var currentCaretPosition = regex.lastIndex;
 
       var start = currentMessage.substr(0, startCaretPosition);
       var end = currentMessage.substr(currentCaretPosition, currentMessage.length);
-      var startEndIndex = (start + mention.value).length + 1;
+      var startEndIndex = (start + settings.templates.mentionInline(mention)).length + 1;
 
       mentionsCollection.push(mention);
 
@@ -170,20 +183,21 @@
       hideAutoComplete();
 
       // Mentions & syntax message
-      var updatedMessageText = start + mention.value + ' ' + end;
-      elmInputBox.val(updatedMessageText);
+      var updatedMessageText = start + settings.templates.mentionInline(mention) + end;
+      elmIsInput ? elmInputBox.val(updatedMessageText) : elmInputBox.html(updatedMessageText);
       updateValues();
 
       // Set correct focus and selection
       elmInputBox.focus();
-      utils.setCaratPosition(elmInputBox[0], startEndIndex);
+      utils.setCaratPosition(elmInputBox[0], elmIsInput ? startEndIndex : elmInputBox.find('[data--id="'+mention.__id+'"]'));
     }
 
     function getInputBoxValue() {
-      return $.trim(elmInputBox.val());
+      return $.trim(elmIsInput ? elmInputBox.val() : elmInputBox.html());
     }
 
     function onAutoCompleteItemClick(e) {
+      e.preventDefault();
       var elmTarget = $(this);
       var mention = autocompleteItemCollection[elmTarget.attr('data-uid')];
 
